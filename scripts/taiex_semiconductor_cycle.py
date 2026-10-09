@@ -1,6 +1,6 @@
 """
 台股加權指數 20 年走勢與半導體週期
-資料來源：Yahoo Finance（^TWII 台股加權指數、^SOX 費城半導體指數）
+資料來源：Yahoo Finance（^TWII 台股加權指數、2330.TW 台積電股價）
 
 用法：
     python3 scripts/taiex_semiconductor_cycle.py
@@ -33,7 +33,7 @@ matplotlib.rcParams["font.sans-serif"] = ["Noto Sans CJK TC", "Noto Sans CJK SC"
 matplotlib.rcParams["axes.unicode_minus"] = False
 
 TWII_COLOR = "#2255a4"
-SOX_COLOR = "#e07b39"
+TSMC_COLOR = "#e07b39"
 CRASH_COLOR = "#c0392b"
 DRIVER_COLOR = "#1b7a3d"
 
@@ -65,7 +65,7 @@ def extremum(series: pd.Series, start: str, end: str, kind: str) -> tuple[pd.Tim
 
 def main() -> None:
     twii = fetch_close("^TWII")
-    sox = fetch_close("^SOX")
+    tsmc = fetch_close("2330.TW")
 
     # -----------------------------------------------------------------
     # 事件標記：歷史低潮用區間內實際高/低點抓取，近期里程碑用最近交易日實際收盤價
@@ -115,12 +115,12 @@ def main() -> None:
     ax2 = ax1.twinx()
 
     ax1.plot(twii.index, twii.values, color=TWII_COLOR, linewidth=1.1, label="台股加權指數 (TAIEX, 左軸)")
-    ax2.plot(sox.index, sox.values, color=SOX_COLOR, linewidth=1.0, alpha=0.75, label="費城半導體指數 (SOX, 右軸)")
+    ax2.plot(tsmc.index, tsmc.values, color=TSMC_COLOR, linewidth=1.0, alpha=0.75, label="台積電股價 (2330, 右軸)")
 
     ax1.set_ylabel("台股加權指數 (點)", color=TWII_COLOR, fontsize=12)
-    ax2.set_ylabel("費城半導體指數 SOX (點)", color=SOX_COLOR, fontsize=12)
+    ax2.set_ylabel("台積電股價 (元)", color=TSMC_COLOR, fontsize=12)
     ax1.tick_params(axis="y", colors=TWII_COLOR)
-    ax2.tick_params(axis="y", colors=SOX_COLOR)
+    ax2.tick_params(axis="y", colors=TSMC_COLOR)
 
     ax1.set_ylim(bottom=0)
     ax2.set_ylim(bottom=0)
@@ -145,11 +145,11 @@ def main() -> None:
 
     # 右側標出兩條線的最新數值
     last_twii = twii.iloc[-1]
-    last_sox = sox.iloc[-1]
+    last_tsmc = tsmc.iloc[-1]
     ax1.annotate(
         f"{last_twii:,.0f}",
         xy=(twii.index[-1], last_twii),
-        xytext=(8, 0),
+        xytext=(10, 6),
         textcoords="offset points",
         color=TWII_COLOR,
         fontsize=10,
@@ -157,18 +157,18 @@ def main() -> None:
         va="center",
     )
     ax2.annotate(
-        f"{last_sox:,.0f}",
-        xy=(sox.index[-1], last_sox),
-        xytext=(8, -12),
+        f"{last_tsmc:,.0f} 元",
+        xy=(tsmc.index[-1], last_tsmc),
+        xytext=(10, -18),
         textcoords="offset points",
-        color=SOX_COLOR,
+        color=TSMC_COLOR,
         fontsize=10,
         fontweight="bold",
         va="center",
     )
 
     # 軸線與格線樣式
-    ax1.set_xlim(twii.index.min() - pd.Timedelta(days=60), twii.index.max() + pd.Timedelta(days=260))
+    ax1.set_xlim(twii.index.min() - pd.Timedelta(days=60), twii.index.max() + pd.Timedelta(days=550))
     ax1.xaxis.set_major_locator(mdates.YearLocator(2))
     ax1.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
     ax1.grid(True, which="major", axis="both", linestyle=":", linewidth=0.6, color="#999999", alpha=0.5)
@@ -178,7 +178,7 @@ def main() -> None:
 
     fig.suptitle("台股加權指數 20 年走勢與半導體週期 (2000–2026)", fontsize=18, fontweight="bold", x=0.08, ha="left")
     ax1.set_title(
-        "台股加權指數（TAIEX）對照費城半導體指數（SOX），標記重大景氣與產業事件對走勢的影響",
+        "台股加權指數（TAIEX）對照台積電（2330）股價，標記重大景氣與產業事件對走勢的影響",
         fontsize=11,
         color="#555555",
         loc="left",
@@ -191,7 +191,7 @@ def main() -> None:
 
     fig.text(
         0.08, 0.01,
-        f"資料來源：Yahoo Finance（^TWII、^SOX），擷取日期：{dt.date.today().isoformat()}",
+        f"資料來源：Yahoo Finance（^TWII、2330.TW），擷取日期：{dt.date.today().isoformat()}",
         fontsize=8.5,
         color="#777777",
     )
