@@ -29,7 +29,11 @@ END = dt.date.today().isoformat()
 OUT_DIR = Path(__file__).resolve().parent.parent / "output"
 OUT_DIR.mkdir(exist_ok=True)
 
-matplotlib.rcParams["font.sans-serif"] = ["Noto Sans CJK TC", "Noto Sans CJK SC", "WenQuanYi Zen Hei"]
+matplotlib.rcParams["font.sans-serif"] = [
+    "Noto Sans CJK TC", "Noto Sans CJK SC", "WenQuanYi Zen Hei",  # Linux
+    "PingFang TC", "Heiti TC", "STHeiti",  # macOS
+    "Microsoft JhengHei", "SimHei",  # Windows
+]
 matplotlib.rcParams["axes.unicode_minus"] = False
 
 TWII_COLOR = "#2255a4"
