@@ -71,44 +71,47 @@ def main() -> None:
     # 事件標記：歷史低潮用區間內實際高/低點抓取，近期里程碑用最近交易日實際收盤價
     # （數值皆來自抓到的真實資料，不手動硬編碼點位）
     # -----------------------------------------------------------------
+    # 每筆事件：(時間戳, 數值, 標籤文字, 顏色, va, y 位置比例, 連接線 y 比例)
+    # y 位置比例是手動依照事件在時間軸上的疏密分配「層級」，避免鄰近事件的文字互相重疊；
+    # 2022-2025 年間事件密集，用較短的單行標籤 + 多層交錯。
     events = []
 
     ts, val = extremum(twii, "2000-01-01", "2000-06-30", "max")
-    events.append((ts, val, f".com 泡沫前高點\n{val:,.0f}", CRASH_COLOR, "top"))
+    events.append((ts, val, f".com 泡沫前高點\n{val:,.0f}", CRASH_COLOR, "top", 0.83, "left"))
 
     ts, val = extremum(twii, "2008-09-01", "2009-01-31", "min")
-    events.append((ts, val, f"金融海嘯低點\n{val:,.0f}", CRASH_COLOR, "bottom"))
+    events.append((ts, val, f"金融海嘯低點\n{val:,.0f}", CRASH_COLOR, "bottom", 0.04, "center"))
 
     ts, val = extremum(twii, "2015-07-01", "2016-02-29", "min")
-    events.append((ts, val, f"陸股熔斷\n半導體下行\n{val:,.0f}", CRASH_COLOR, "bottom"))
+    events.append((ts, val, f"陸股熔斷／半導體下行\n{val:,.0f}", CRASH_COLOR, "bottom", 0.04, "center"))
 
     ts, val = extremum(twii, "2018-10-01", "2019-01-31", "min")
-    events.append((ts, val, f"中美貿易戰\n{val:,.0f}", CRASH_COLOR, "bottom"))
+    events.append((ts, val, f"中美貿易戰　{val:,.0f}", CRASH_COLOR, "bottom", 0.04, "center"))
 
     ts, val = extremum(twii, "2020-02-15", "2020-03-31", "min")
-    events.append((ts, val, f"COVID-19 崩盤\n{val:,.0f}", CRASH_COLOR, "bottom"))
+    events.append((ts, val, f"COVID-19 崩盤　{val:,.0f}", CRASH_COLOR, "bottom", 0.15, "center"))
 
     ts, val = extremum(twii, "2022-09-01", "2022-11-15", "min")
-    events.append((ts, val, f"Fed 急升息\n記憶體去庫存\n{val:,.0f}", CRASH_COLOR, "bottom"))
+    events.append((ts, val, f"Fed 急升息／記憶體去庫存　{val:,.0f}", CRASH_COLOR, "bottom", 0.04, "center"))
 
     ts, val = nearest(twii, "2023-05-01")
-    events.append((ts, val, f"AI 熱潮啟動\nCoWoS 擴產\n{val:,.0f}", DRIVER_COLOR, "top"))
+    events.append((ts, val, f"AI 熱潮啟動／CoWoS 擴產　{val:,.0f}", DRIVER_COLOR, "top", 0.78, "center"))
 
     ts, val = nearest(twii, "2024-07-11")
-    events.append((ts, val, f"首度站上 2.4 萬點\n{val:,.0f}", DRIVER_COLOR, "top"))
+    events.append((ts, val, f"首度站上 2.4 萬點　{val:,.0f}", DRIVER_COLOR, "top", 0.60, "center"))
 
     ts, val = nearest(twii, "2025-02-03")
-    events.append((ts, val, f"DeepSeek + 關稅衝擊\n單日重挫\n{val:,.0f}", CRASH_COLOR, "bottom"))
+    events.append((ts, val, f"DeepSeek＋關稅衝擊　{val:,.0f}", CRASH_COLOR, "bottom", 0.15, "center"))
 
     ts, val = nearest(twii, "2025-12-31")
-    events.append((ts, val, f"首度站上 2.9 萬點\n{val:,.0f}", DRIVER_COLOR, "top"))
+    events.append((ts, val, f"首度站上 2.9 萬點　{val:,.0f}", DRIVER_COLOR, "top", 0.95, "right"))
 
     events.sort(key=lambda e: e[0])
 
     # -----------------------------------------------------------------
     # 繪圖
     # -----------------------------------------------------------------
-    fig, ax1 = plt.subplots(figsize=(16, 9), dpi=150)
+    fig, ax1 = plt.subplots(figsize=(18, 9.5), dpi=150)
     ax2 = ax1.twinx()
 
     ax1.plot(twii.index, twii.values, color=TWII_COLOR, linewidth=1.1, label="台股加權指數 (TAIEX, 左軸)")
@@ -122,22 +125,22 @@ def main() -> None:
     ax1.set_ylim(bottom=0)
     ax2.set_ylim(bottom=0)
 
-    # 事件標記：垂直虛線 + 交錯上下的文字標籤，避免互相重疊
+    # 事件標記：垂直虛線 + 分層交錯的文字標籤，避免鄰近事件互相重疊
     ymin, ymax = ax1.get_ylim()
-    for ts, val, label, color, pos in events:
-        ax1.axvline(ts, color=color, linestyle=(0, (4, 3)), linewidth=0.8, alpha=0.55, zorder=1)
-        y = ymax * 0.93 if pos == "top" else ymax * 0.05
+    for ts, val, label, color, pos, y_frac, ha in events:
+        ax1.axvline(ts, color=color, linestyle=(0, (4, 3)), linewidth=0.8, alpha=0.5, zorder=1)
         va = "top" if pos == "top" else "bottom"
         ax1.annotate(
             label,
-            xy=(ts, y),
+            xy=(ts, ymax * y_frac),
             xytext=(0, 0),
             textcoords="offset points",
-            ha="center",
+            ha=ha,
             va=va,
             fontsize=8.5,
             color=color,
             linespacing=1.3,
+            bbox=dict(boxstyle="round,pad=0.15", facecolor="white", edgecolor="none", alpha=0.75),
         )
 
     # 右側標出兩條線的最新數值
@@ -165,6 +168,7 @@ def main() -> None:
     )
 
     # 軸線與格線樣式
+    ax1.set_xlim(twii.index.min() - pd.Timedelta(days=60), twii.index.max() + pd.Timedelta(days=260))
     ax1.xaxis.set_major_locator(mdates.YearLocator(2))
     ax1.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
     ax1.grid(True, which="major", axis="both", linestyle=":", linewidth=0.6, color="#999999", alpha=0.5)
